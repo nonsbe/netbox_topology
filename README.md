@@ -2,6 +2,8 @@
 
 Patch to apply to a netbox installation to add beautiful topology view to sites
 
+**Updated to use `/api/dcim/cables/ endpoint instead` of `/api/dcim/interface-connections/`**
+
 Once installed your individual site's pages should look like this:
 
 ![Screenshot](docs/screenshot-site.png "Screenshot of site's page")
@@ -15,7 +17,7 @@ This module allows to create and delete connections between interfaces via contr
 1. clone git repo
 
 ```
-git clone https://github.com/bashioo/netbox_topology.git
+git clone https://github.com/mylivingweb/netbox_topology.git
 ```
 
 2. run install.sh, sudo might be required to get access to netbox installation directory:
@@ -36,11 +38,25 @@ sudo service apache2 restart
 
 ![Screenshot django setup](docs/screenshot-customfield.png "Screenshot of django setup")
 
-5. modify NETBOXPATH/netbox/static/js/topology_config.json to include your list on roles to hide from the topology view.
+5. modify `$NETBOXPATH/netbox/static/js/topology_config.json` to include your list on roles to hide from the topology view. You will need to add new list of cables to shown under `shown_cables`. Constants are [defined here](https://github.com/digitalocean/netbox/blob/develop/netbox/dcim/constants.py#L336)
+```
+CABLE_TYPE_CAT3 = 1300
+CABLE_TYPE_CAT5 = 1500
+CABLE_TYPE_CAT5E = 1510
+CABLE_TYPE_CAT6 = 1600
+CABLE_TYPE_CAT6A = 1610
+CABLE_TYPE_CAT7 = 1700
+CABLE_TYPE_MMF_OM1 = 3010
+CABLE_TYPE_MMF_OM2 = 3020
+CABLE_TYPE_MMF_OM3 = 3030
+CABLE_TYPE_MMF_OM4 = 3040
+CABLE_TYPE_SMF = 3500
+CABLE_TYPE_POWER = 5000
+``` 
 
-please note that the list should include SLUGs, not names. please check that json is valid.
+*please note that the list should include SLUGs for roles, not names and number for the cables to be shown. please check that json is valid.*
 
-6. let me know if there are any issues - https://github.com/bashioo/netbox_topology/issues
+6. let me know if there are any issues - https://github.com/mylivingweb/netbox_topology/pulls
 
 
 

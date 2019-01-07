@@ -3,5 +3,8 @@
         "server",
         "console-server",
         "pdu"
+    ],
+    "shown_cables": [
+        3500
     ]
 }

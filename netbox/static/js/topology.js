@@ -1,9 +1,10 @@
 var nodes = new vis.DataSet();
 var edges = new vis.DataSet();
-var container = document.getElementById('visjsgraph');
+var container = document.getElementById('mynetwork');
 
 var options = {
-    height: '600px',
+    //height: '1200px',
+    //width: '1200px',
     // default node style
     nodes: {
         shape: 'image',
@@ -23,11 +24,10 @@ var options = {
         },
     },
     physics: {
-        solver: 'forceAtlas2Based', //best solver fot network diagrams
-    },
-    manipulation: {
-        addEdge: addEdge,
-    },
+        solver: 'forceAtlas2Based' //best solver fot network diagrams
+    }
+    
+
 };
 
 var topology = new vis.Network(container, {nodes: nodes, edges: edges}, options);
@@ -42,23 +42,16 @@ topology.on("dragEnd", function (params){
     });
 });
 
-topology.on("click", function (params) {
-    if (params.edges.length == 1 & params.nodes.length == 0){
-        $( '#topology_delete_edge' ).removeClass('disabled');
-    }else{
-        $( '#topology_delete_edge' ).addClass('disabled');
-    }
-});
-
 // load configuration
 api_call("/static/js/topology_config.json", "GET", undefined, function(config) {
     var hidden_roles = config.hidden_roles;
-
+    // Load up only cables that need to be shown
+    var shown_cables = config.shown_cables;
     // load devices
     api_call("/api/dcim/devices/?limit=0&site="+SITE_SLUG, "GET", undefined, function(response) {
        $.each(response.results, function(index, device) {
            if (hidden_roles.includes(device.device_role.slug)) {
-               console.log(device.name+' has been hidden because of its role '+device.device_role.slug);
+               //console.log(device.name+' has been hidden because of its role '+device.device_role.slug);
                return undefined;
            }
            var node = {
@@ -82,148 +75,43 @@ api_call("/static/js/topology_config.json", "GET", undefined, function(config) {
        // once all nodes a loaded fit them to viewport
        topology.fit();
     });
-
-    // load connections
-    api_call("/api/dcim/interface-connections/?limit=0&site="+SITE_SLUG, "GET", undefined, function(response){
-       $.each(response.results, function(index, connection) {
-
-           // after 2.4.3 form_factor is not being returned as part of the interface
-           if (connection.interface_a.form_factor) {
-                var color = get_connection_color(
-                    connection.interface_a.form_factor.value,
-                    connection.interface_b.form_factor.value
-                );
-           } else {
-                var color = undefined;
-           }
-
-           edges.add({
-               id: connection.id,
-               from: connection.interface_a.device.id, 
-               to: connection.interface_b.device.id, 
-               dashes: !connection.connection_status.value,
-               color: {color: color, highlight: color, hover: color},
-               title: 'Connection between<br>'
-                   +connection.interface_a.device.name+' ['+connection.interface_a.name+']<br>'
-                   +connection.interface_b.device.name+' ['+connection.interface_b.name+']',
-           });
-       });
-    });
-});
-
-
-$( '#topology_delete_edge' ).on('click', function() {
-    if (topology.getSelectedEdges().length != 1) return false;
-    var edge_id = topology.getSelectedEdges()[0];
-    $('#delete_connection_label').html(edges.get(edge_id).title );
-    $( "#delete_connection_dialog" ).dialog({
-        width: 400,
-        resizable: false,
-        close: function(){
-            $( '#delete_connection_confirm' ).off('click');
-        },
-        buttons: [
-            {
-                text: 'Delete',
-                class: 'btn btn-primary',
-                click: function() {
-                    api_call(
-                        '/api/dcim/interface-connections/'+edge_id+'/',
-                        'DELETE',
-                        undefined,
-                        function(response, status) {
-                            // only remove edge if API DELETE returned
-                            edges.remove(edge_id);
-                            $( '#topology_delete_edge' ).addClass('disabled');
-                        },
-                    );
-                    $( this ).dialog( "close" );
+    // load cables
+    api_call("/api/dcim/cables/?limit=0&site="+SITE_SLUG, "GET", undefined, function(response){
+        $.each(response.results, function(index, cable) {
+            
+            if (shown_cables.includes(cable.type)) {              
+                // Set display color to same color as cable in netbox
+                if (cable.color) {
+                    var color = '#'+cable.color;
+                } else {
+                    var color = '#000000';
                 }
-            },
-            {
-                text: "Cancel",
-                class: 'btn btn-primary',
-                click: function() {
-                    $( this ).dialog( "close" );
-                }
-            },
-        ]
-    });
+    
+                edges.add({
+                    id: cable.id,
+                    from: cable.termination_a.device.id, 
+                    to: cable.termination_b.device.id, 
+                    dashes: !cable.status.value,
+                    color: {color: color, highlight: color, hover: color},
+                    title: 'Connection between<br>'
+                        +cable.termination_a.device.display_name+' ['+cable.termination_a.name+']<br>'
+                        +cable.termination_b.device.display_name+' ['+cable.termination_b.name+']',
+                });
+            } else {
+                //console.log(cable.id+' has been hidden because of its type '+cable.type);
+                return undefined;
+            }
+        });
+        topology.fit();
+     });
 });
 
-$( '#topology_add_edge' ).on('click', function(){
-    $( '#topology_add_edge' ).toggleClass('addMode');
-    if ($( '#topology_add_edge' ).hasClass('addMode')) {
-        $( '#topology_add_edge_label' ).text('Cancel');
-        topology.addEdgeMode();
-    }else{
-        $( '#topology_add_edge_label' ).text('New connection');
-        topology.disableEditMode();
-    }
-});
-
-$( '#topology_reset_coordinates' ).on('click', function() {
-    $.each(nodes.getIds(), function(undefined, node_id){
-        nodes.update({ id: node_id, physics: true });
-        api_call('/api/dcim/devices/'+node_id+'/', 'PATCH', {custom_fields: {coordinates: ''}});
-    })
-});
-
-
-function addEdge(edgeData,callback) {
-    // cancel built-in add routine
-    callback(null);
-    topology.disableEditMode();
-    populate_interfaces('device_a', edgeData.from);
-    populate_interfaces('device_b', edgeData.to);
-    $( "#add_connection_dialog" ).dialog({
-        width: 600,
-        resizable: false,
-        close: function( event, ui ) {
-            $( '#topology_add_edge_label' ).text('New connection');
-            $( '#topology_add_edge' ).removeClass('addMode');
-        },
-        buttons: [
-            {
-                text: "Create",
-                class: 'btn btn-primary',
-                click: function() {
-                    var data = {
-                        interface_a: $('#device_a_interfaces').val(),
-                        interface_b: $('#device_b_interfaces').val(),
-                        connection_status: $('#connection_status').val(),
-                    };
-                    api_call("/api/dcim/interface-connections/", "POST", data, function(response, status){
-                        // only draw edge if API call was successful
-                        var color = get_connection_color(
-                            $('#device_a_interfaces  option:selected').attr('form_factor'), 
-                            $('#device_b_interfaces  option:selected').attr('form_factor')
-                        );
-                        edgeData.id = response.id;
-                        edgeData.dashes = !response.connection_status;
-                        edgeData.color = {color: color, highlight: color, hover: color},
-                        edgeData.title = 'Connection between<br>'
-                            +nodes.get(edgeData.from).name+' ['+$('#device_a_interfaces  option:selected').text()+']<br>'
-                            +nodes.get(edgeData.to).name+' ['+$('#device_b_interfaces  option:selected').text()+']';
-                        edges.add(edgeData);
-                    })
-                    $( this ).dialog( "close" );
-                }
-            },
-            {
-                text: "Cancel",
-                class: 'btn btn-primary',
-                click: function() {
-                    $( this ).dialog( "close" );
-                },
-            },
-        ],
-    });
+function setVisible(selector, visible) {
+    document.querySelector(selector).style.display = visible ? 'block' : 'none';
 }
-
 function api_call(url, method, data, callback){
     $.ajax({
-        url: url,
+        url: BASEURL + url,
         headers: {"X-CSRFToken": TOKEN},
         dataType: 'json',
         contentType: 'application/json',
@@ -233,17 +121,6 @@ function api_call(url, method, data, callback){
     }).fail(function(response){
         console.log(response);
     });
-}
-
-function get_connection_color(interface_a, interface_b) {
-    var ff_a = Math.floor(interface_a/100);
-    var ff_b = Math.floor(interface_b/100);
-    if ( (ff_a == 50) & (ff_b == 50) ){
-        // stack cable
-        return '#000000';
-    }
-    // default color
-    return undefined;
 }
 
 function populate_interfaces(device_tag, device_id) {
