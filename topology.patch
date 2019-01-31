@@ -21,29 +21,6 @@ index bd15708..15a112a 100644
 +.ui-dialog-titlebar-close {
 +    display: none;
 +}
-index bd15708..15a112a 100644
---- netbox/static/css/base.css
-+++ netbox/static/css/base.css
-@@ -433,4 +433,17 @@ td .progress {
- }
- textarea {
-     font-family: Consolas, Lucida Console, monospace;
--}
-\ No newline at end of file
-+}
-+/* Vis JS hide built-in manipulation panel */
-+.vis-edit, .vis-edit-mode, .vis-close, .vis-back, .vis-separator-line {
-+    display: none !important;
-+    background-image: none !important;
-+}
-+.vis-manipulation {
-+    background-color: #fff !important;
-+    border: 0 !important;
-+}
-+/* JQuery hide dialog close button */
-+.ui-dialog-titlebar-close {
-+    display: none;
-+}
 index 17efcad..6c3b1d6 100644
 --- netbox/templates/_base.html
 +++ netbox/templates/_base.html
