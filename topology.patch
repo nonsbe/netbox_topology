@@ -115,7 +115,7 @@ index b14c201..67127d6 100644
 +    </div>
 +        
  </div>
- {% include 'inc/graphs_modal.html' %}
+ {% include 'inc/modal.html' with modal_name='graphs' %}
  {% endblock %}
  
  {% block javascript %}
