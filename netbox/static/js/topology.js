@@ -3,7 +3,7 @@ var edges = new vis.DataSet();
 var container = document.getElementById('visjsgraph');
 
 var options = {
-    //height: '1200px',
+    height: '1200px',
     //width: '1200px',
     // default node style
     nodes: {
