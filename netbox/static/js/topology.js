@@ -1,6 +1,6 @@
 var nodes = new vis.DataSet();
 var edges = new vis.DataSet();
-var container = document.getElementById('mynetwork');
+var container = document.getElementById('visjsgraph');
 
 var options = {
     //height: '1200px',
