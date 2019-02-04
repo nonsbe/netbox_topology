@@ -111,7 +111,7 @@ function setVisible(selector, visible) {
 }
 function api_call(url, method, data, callback){
     $.ajax({
-        url: BASEURL + url,
+        url: url,
         headers: {"X-CSRFToken": TOKEN},
         dataType: 'json',
         contentType: 'application/json',
