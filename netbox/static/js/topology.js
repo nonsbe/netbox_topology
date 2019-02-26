@@ -1,11 +1,18 @@
 var nodes = new vis.DataSet();
 var edges = new vis.DataSet();
 var container = document.getElementById('visjsgraph');
+var MD5 = function(d){result = M(V(Y(X(d),8*d.length)));return result.toLowerCase()};function M(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function X(d){for($
+//function md5(d){return rstr2hex(binl2rstr(binl_md5(rstr2binl(d),8*d.length)))}function rstr2hex(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function rstr2bi$
 
 var options = {
     height: '1200px',
     //width: '1200px',
     // default node style
+    interaction: {
+        hover: true,
+        hoverConnectedEdges: true,
+        multiselect: true
+    },
     nodes: {
         shape: 'image',
         brokenImage: TOPOLOGY_IMG_DIR + 'role-unknown.png',
@@ -79,23 +86,30 @@ api_call("/static/js/topology_config.json", "GET", undefined, function(config) {
     api_call("/api/dcim/cables/?limit=0&site="+SITE_SLUG, "GET", undefined, function(response){
         $.each(response.results, function(index, cable) {
             
-            if (shown_cables.includes(cable.type)) {              
+            if ((shown_cables.includes(cable.type)) && (typeof cable.termination_a.device != "undefined")) {              
                 // Set display color to same color as cable in netbox
                 if (cable.color) {
                     var color = '#'+cable.color;
                 } else {
                     var color = '#000000';
                 }
-    
+                
+                //var type = '#d'+cable.type+'0';
+                var type = '#'+MD5(cable.type+'thisismagicpadding').substring(0,6);
+                //var type = '#'+type.substring(26,32);
+                //console.log(cable.id+' of type '+cable.type+' should have a color of '+type);
+
                 edges.add({
                     id: cable.id,
                     from: cable.termination_a.device.id, 
                     to: cable.termination_b.device.id, 
                     dashes: !cable.status.value,
                     color: {color: color, highlight: color, hover: color},
-                    title: 'Connection between<br>'
+                    title: cable.label+'<br>'
+                        +'Connection between<br>'
                         +cable.termination_a.device.display_name+' ['+cable.termination_a.name+']<br>'
-                        +cable.termination_b.device.display_name+' ['+cable.termination_b.name+']',
+                        +cable.termination_b.device.display_name+' ['+cable.termination_b.name+']<br>'
+                        +'Type: '+cable.type,
                 });
             } else {
                 //console.log(cable.id+' has been hidden because of its type '+cable.type);
