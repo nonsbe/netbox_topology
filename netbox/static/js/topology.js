@@ -1,7 +1,7 @@
 var nodes = new vis.DataSet();
 var edges = new vis.DataSet();
 var container = document.getElementById('visjsgraph');
-var MD5 = function(d){result = M(V(Y(X(d),8*d.length)));return result.toLowerCase()};function M(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function X(d){for($
+//var MD5 = function(d){result = M(V(Y(X(d),8*d.length)));return result.toLowerCase()};function M(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function X(d){for($
 //function md5(d){return rstr2hex(binl2rstr(binl_md5(rstr2binl(d),8*d.length)))}function rstr2hex(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function rstr2bi$
 
 var options = {
@@ -94,8 +94,8 @@ api_call("/static/js/topology_config.json", "GET", undefined, function(config) {
                     var color = '#000000';
                 }
                 
-                //var type = '#d'+cable.type+'0';
-                var type = '#'+MD5(cable.type+'thisismagicpadding').substring(0,6);
+                var type = '#d'+cable.type+'0';
+                //var type = '#'+MD5(cable.type+'thisismagicpadding').substring(0,6);
                 //var type = '#'+type.substring(26,32);
                 //console.log(cable.id+' of type '+cable.type+' should have a color of '+type);
 
